@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Password Generator</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0f0f1a;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: #e2e8f0;
+        }
+
+        .card {
+            background: #1a1a2e;
+            border: 1px solid #2d2d4e;
+            border-radius: 16px;
+            padding: 40px 36px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .logo {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #a78bfa;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-bottom: 32px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        input[type="number"] {
+            flex: 1;
+            background: #0f0f1a;
+            border: 1px solid #2d2d4e;
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            color: #e2e8f0;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="number"]:focus {
+            border-color: #7c3aed;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            opacity: 1;
+        }
+
+        button {
+            background: #7c3aed;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            white-space: nowrap;
+        }
+
+        button:hover { background: #6d28d9; }
+        button:active { transform: scale(0.97); }
+        button:disabled { background: #4c1d95; cursor: not-allowed; opacity: 0.6; }
+
+        .result-box {
+            background: #0f0f1a;
+            border: 1px solid #2d2d4e;
+            border-radius: 10px;
+            padding: 16px;
+            min-height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .password-text {
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            color: #a78bfa;
+            word-break: break-all;
+            flex: 1;
+            letter-spacing: 0.04em;
+        }
+
+        .password-text.placeholder {
+            color: #334155;
+            font-family: inherit;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: 1px solid #2d2d4e;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .copy-btn:hover { border-color: #7c3aed; color: #a78bfa; background: transparent; }
+        .copy-btn.copied { border-color: #22c55e; color: #22c55e; }
+
+        .error {
+            color: #f87171;
+            font-size: 0.85rem;
+            min-height: 20px;
+            text-align: center;
+        }
+
+        .strength-bar {
+            height: 4px;
+            border-radius: 2px;
+            background: #2d2d4e;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .strength-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: #22c55e;
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        .info {
+            text-align: center;
+            font-size: 0.78rem;
+            color: #475569;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo">🔐</div>
+        <h1>Password Generator</h1>
+        <p class="subtitle">Secure &amp; memorable passwords — no dictionaries needed</p>
+
+        <label for="lengthInput">Password Length</label>
+        <div class="input-row">
+            <input
+                type="number"
+                id="lengthInput"
+                min="16"
+                max="128"
+                value="20"
+                placeholder="Min 16"
+            />
+            <button id="generateBtn" onclick="generate()">Generate</button>
+        </div>
+
+        <div class="result-box">
+            <span class="password-text placeholder" id="passwordDisplay">Your password will appear here…</span>
+            <button class="copy-btn" id="copyBtn" onclick="copyPassword()" style="display:none">Copy</button>
+        </div>
+
+        <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+
+        <p class="error" id="errorMsg"></p>
+
+        <p class="info">
+            Uses phonetic syllables + symbols + digits &nbsp;·&nbsp; Min 16 characters
+        </p>
+    </div>
+
+    <script>
+        let currentPassword = "";
+
+        async function generate() {
+            const lengthInput = document.getElementById("lengthInput");
+            const btn = document.getElementById("generateBtn");
+            const display = document.getElementById("passwordDisplay");
+            const errorMsg = document.getElementById("errorMsg");
+            const copyBtn = document.getElementById("copyBtn");
+            const strengthFill = document.getElementById("strengthFill");
+
+            errorMsg.textContent = "";
+            const length = parseInt(lengthInput.value, 10);
+
+            if (isNaN(length) || length < 16) {
+                errorMsg.textContent = "Please enter a length of at least 16.";
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = "Generating…";
+            display.textContent = "…";
+            display.classList.add("placeholder");
+            copyBtn.style.display = "none";
+            strengthFill.style.width = "0%";
+
+            try {
+                const res = await fetch("/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ length })
+                });
+                const data = await res.json();
+
+                if (!res.ok || data.error) {
+                    errorMsg.textContent = data.error || "Something went wrong.";
+                    display.textContent = "Your password will appear here…";
+                } else {
+                    currentPassword = data.password;
+                    display.textContent = currentPassword;
+                    display.classList.remove("placeholder");
+                    copyBtn.style.display = "inline-block";
+                    copyBtn.textContent = "Copy";
+                    copyBtn.classList.remove("copied");
+
+                    const pct = Math.min(100, Math.round((length / 64) * 100));
+                    strengthFill.style.width = pct + "%";
+                }
+            } catch (err) {
+                errorMsg.textContent = "Network error. Please try again.";
+                display.textContent = "Your password will appear here…";
+                display.classList.add("placeholder");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Generate";
+            }
+        }
+
+        async function copyPassword() {
+            if (!currentPassword) return;
+            const copyBtn = document.getElementById("copyBtn");
+            try {
+                await navigator.clipboard.writeText(currentPassword);
+                copyBtn.textContent = "Copied!";
+                copyBtn.classList.add("copied");
+                setTimeout(() => {
+                    copyBtn.textContent = "Copy";
+                    copyBtn.classList.remove("copied");
+                }, 2000);
+            } catch {
+                copyBtn.textContent = "Failed";
+            }
+        }
+
+        document.getElementById("lengthInput").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") generate();
+        });
+    </script>
+</body>
+</html>
