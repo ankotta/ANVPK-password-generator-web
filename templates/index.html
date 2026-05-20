@@ -15,6 +15,7 @@
             background: #0f0f1a;
             font-family: 'Segoe UI', system-ui, sans-serif;
             color: #e2e8f0;
+            padding: 24px 16px;
         }
 
         .card {
@@ -76,14 +77,10 @@
             transition: border-color 0.2s;
         }
 
-        input[type="number"]:focus {
-            border-color: #7c3aed;
-        }
+        input[type="number"]:focus { border-color: #7c3aed; }
 
         input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-            opacity: 1;
-        }
+        input[type="number"]::-webkit-outer-spin-button { opacity: 1; }
 
         button {
             background: #7c3aed;
@@ -175,6 +172,108 @@
             color: #475569;
             margin-top: 20px;
         }
+
+        /* ── History panel ── */
+        .history-section {
+            margin-top: 28px;
+            border-top: 1px solid #2d2d4e;
+            padding-top: 20px;
+        }
+
+        .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .history-header label {
+            margin-bottom: 0;
+        }
+
+        .clear-btn {
+            background: transparent;
+            border: 1px solid #2d2d4e;
+            border-radius: 8px;
+            padding: 5px 12px;
+            font-size: 0.78rem;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .clear-btn:hover { border-color: #f87171; color: #f87171; background: transparent; }
+
+        .history-empty {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #334155;
+            font-style: italic;
+            padding: 16px 0;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 220px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #2d2d4e transparent;
+        }
+
+        .history-list::-webkit-scrollbar { width: 4px; }
+        .history-list::-webkit-scrollbar-thumb { background: #2d2d4e; border-radius: 2px; }
+
+        .history-item {
+            background: #0f0f1a;
+            border: 1px solid #2d2d4e;
+            border-radius: 8px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: border-color 0.2s;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .history-item:hover { border-color: #3d3d6e; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .history-pw {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            word-break: break-all;
+            flex: 1;
+            letter-spacing: 0.03em;
+        }
+
+        .history-meta {
+            font-size: 0.72rem;
+            color: #475569;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .history-copy {
+            background: transparent;
+            border: 1px solid #2d2d4e;
+            border-radius: 6px;
+            padding: 4px 9px;
+            font-size: 0.75rem;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .history-copy:hover { border-color: #7c3aed; color: #a78bfa; background: transparent; }
+        .history-copy.copied { border-color: #22c55e; color: #22c55e; }
     </style>
 </head>
 <body>
@@ -205,13 +304,75 @@
 
         <p class="error" id="errorMsg"></p>
 
-        <p class="info">
-            Uses phonetic syllables + symbols + digits &nbsp;·&nbsp; Min 16 characters
-        </p>
+        <p class="info">Uses phonetic syllables + symbols + digits &nbsp;·&nbsp; Min 16 characters</p>
+
+        <!-- History -->
+        <div class="history-section" id="historySection" style="display:none">
+            <div class="history-header">
+                <label>Recent Passwords</label>
+                <button class="clear-btn" onclick="clearHistory()">Clear</button>
+            </div>
+            <div class="history-list" id="historyList"></div>
+        </div>
     </div>
 
     <script>
         let currentPassword = "";
+        const history = [];
+        const MAX_HISTORY = 10;
+
+        function formatTime(date) {
+            return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        }
+
+        function addToHistory(password, length) {
+            history.unshift({ password, length, time: new Date() });
+            if (history.length > MAX_HISTORY) history.pop();
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const section = document.getElementById("historySection");
+            const list = document.getElementById("historyList");
+
+            if (history.length === 0) {
+                section.style.display = "none";
+                return;
+            }
+
+            section.style.display = "block";
+            list.innerHTML = history.map((entry, i) => `
+                <div class="history-item">
+                    <span class="history-pw">${escapeHtml(entry.password)}</span>
+                    <span class="history-meta">${entry.length} chars · ${formatTime(entry.time)}</span>
+                    <button class="history-copy" id="hcopy-${i}" onclick="copyHistoryItem(${i})">Copy</button>
+                </div>
+            `).join("");
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+        }
+
+        function clearHistory() {
+            history.length = 0;
+            renderHistory();
+        }
+
+        async function copyHistoryItem(index) {
+            const btn = document.getElementById(`hcopy-${index}`);
+            try {
+                await navigator.clipboard.writeText(history[index].password);
+                btn.textContent = "Copied!";
+                btn.classList.add("copied");
+                setTimeout(() => {
+                    btn.textContent = "Copy";
+                    btn.classList.remove("copied");
+                }, 2000);
+            } catch {
+                btn.textContent = "Failed";
+            }
+        }
 
         async function generate() {
             const lengthInput = document.getElementById("lengthInput");
@@ -247,6 +408,7 @@
                 if (!res.ok || data.error) {
                     errorMsg.textContent = data.error || "Something went wrong.";
                     display.textContent = "Your password will appear here…";
+                    display.classList.add("placeholder");
                 } else {
                     currentPassword = data.password;
                     display.textContent = currentPassword;
@@ -257,6 +419,8 @@
 
                     const pct = Math.min(100, Math.round((length / 64) * 100));
                     strengthFill.style.width = pct + "%";
+
+                    addToHistory(currentPassword, length);
                 }
             } catch (err) {
                 errorMsg.textContent = "Network error. Please try again.";
