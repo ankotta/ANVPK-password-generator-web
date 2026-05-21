@@ -284,13 +284,12 @@
 
         <label for="lengthInput">Password Length</label>
         <div class="input-row">
-            <input
+            <input 
                 type="number"
                 id="lengthInput"
                 min="16"
-                max="128"
-                value="20"
-                placeholder="Min 16"
+                max="64"
+                placeholder="Enter between 16 and 64"
             />
             <button id="generateBtn" onclick="generate()">Generate</button>
         </div>
