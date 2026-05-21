@@ -161,9 +161,15 @@ def generate():
     except (ValueError, TypeError):
         return jsonify({"error": "Length must be a number."}), 400
 
+    # Enforce your lower bound
     if length < minimum_length:
         return jsonify({"error": f"Length must be at least {minimum_length}."}), 400
 
+    # Enforce your new safety upper bound cap
+    if length > 64:
+        return jsonify({"error": "Length cannot exceed 64 characters."}), 400
+
+    # Generate the password safely within your 16-64 boundaries
     try:
         password = make_memorable_password(length)
         return jsonify({"password": password})
